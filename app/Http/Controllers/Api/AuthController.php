@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\PersonalAccessTokenService;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -34,7 +35,7 @@ class AuthController extends Controller
             // Create a new personal access token and assign some abilities to it.
             $token = $this->personalAccessTokenService->store($request, $user, ['create', 'read', 'update', 'delete']);
             DB::commit();
-            
+
             return self::withCreated(
                 'User ' . self::MESSAGES['register'],
                 [
@@ -47,5 +48,37 @@ class AuthController extends Controller
             DB::rollBack();
             return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
         }
+    }
+
+    public function login(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'login' => ['required', 'string'], // Can be username, employee_id, or email
+            'password' => ['required', 'string'],
+        ]);
+
+        $validatedData = $validator->validated();
+
+        $login = $validatedData['login'];
+        $password = $validatedData['password'];
+
+        $user = User::where('username', $login)
+            ->orWhere('employee_id', $login)
+            ->orWhere('email', $login)
+            ->first();
+
+        if ($user && Hash::check($password, $user->password)) {
+            $token = $this->personalAccessTokenService->store($request, $user, ['create', 'read', 'update', 'delete']);
+            return self::withOk(
+                'User ' . self::MESSAGES['login'],
+                [
+                    'user' => $user,
+                    'token' => $token,
+                    'token_type' => 'Bearer'
+                ]
+            );
+        }
+
+        return self::withUnauthorized(self::MESSAGES['invalid_credentials']);
     }
 }

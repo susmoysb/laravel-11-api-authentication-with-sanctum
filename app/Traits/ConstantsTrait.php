@@ -9,6 +9,7 @@ trait ConstantsTrait
         'register' => 'registered successfully.',
         'login' => 'logged in successfully.',
         'logout' => 'logged out successfully.',
+        'invalid_credentials' => 'Invalid credentials.',
         'system_error' => 'Something went wrong. Please try again later.',
     ];
 }
