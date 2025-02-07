@@ -68,6 +68,7 @@ class AuthController extends Controller
             ->first();
 
         if ($user && Hash::check($password, $user->password)) {
+            // Create a new personal access token and assign some abilities to it.
             $token = $this->personalAccessTokenService->store($request, $user, ['create', 'read', 'update', 'delete']);
             return self::withOk(
                 'User ' . self::MESSAGES['login'],
@@ -80,5 +81,13 @@ class AuthController extends Controller
         }
 
         return self::withUnauthorized(self::MESSAGES['invalid_credentials']);
+    }
+
+    public function logout(Request $request, $tokenId = null)
+    {
+        if ($this->personalAccessTokenService->delete($request, $tokenId)) {
+            return self::withOk(self::MESSAGES['logout']);
+        }
+        return self::withBadRequest(self::MESSAGES['system_error']);
     }
 }
