@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Services\PersonalAccessTokenService;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -14,9 +15,30 @@ use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
+    /**
+     * Constructor.
+     *
+     * Injects the PersonalAccessTokenService dependency to manage personal access tokens.
+     *
+     * @param PersonalAccessTokenService $personalAccessTokenService The service responsible for generating and managing personal access tokens.
+     */
     public function __construct(private PersonalAccessTokenService $personalAccessTokenService) {}
 
-    public function register(Request $request)
+    /**
+     * Register a new user.
+     *
+     * This method handles the registration of a new user. It validates the incoming request data,
+     * creates a new user record in the database, generates a personal access token for the user,
+     * and returns the user data along with the token.
+     *
+     * @param \Illuminate\Http\Request $request The incoming request containing user registration data.
+     *
+     * @return \Illuminate\Http\JsonResponse The response containing the created user data and access token.
+     *
+     * @throws \Illuminate\Validation\ValidationException If the validation fails.
+     * @throws \Exception If there is an error during the user creation process.
+     */
+    public function register(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'min:2', 'max:255'],
@@ -50,7 +72,21 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request)
+    /**
+     * Handle the login request.
+     *
+     * This method validates the login credentials provided in the request.
+     * It accepts a 'login' field which can be a username, employee_id, or email, and a 'password' field
+     * If the credentials are valid, it generates a new personal access token for the user with specified abilities and returns it along with user data.
+     * If the credentials are invalid, it returns an unauthorized response.
+     *
+     * @param \Illuminate\Http\Request $request The incoming request instance.
+     *
+     * @return \Illuminate\Http\JsonResponse The response containing user data and access token, or an unauthorized response.
+     *
+     * @throws \Illuminate\Validation\ValidationException If the validation fails.
+     */
+    public function login(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'login' => ['required', 'string'], // Can be username, employee_id, or email
@@ -83,7 +119,16 @@ class AuthController extends Controller
         return self::withUnauthorized(self::MESSAGES['invalid_credentials']);
     }
 
-    public function logout(Request $request, $tokenId = null)
+    /**
+     * Logout the authenticated user by deleting their personal access token.
+     *
+     * @param \Illuminate\Http\Request $request The current request instance.
+     *
+     * @param int|null $tokenId The ID of the token to delete, or null to delete the current token.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the logout operation.
+     */
+    public function logout(Request $request, int $tokenId = null): JsonResponse
     {
         if ($this->personalAccessTokenService->delete($request, $tokenId)) {
             return self::withOk(self::MESSAGES['logout']);

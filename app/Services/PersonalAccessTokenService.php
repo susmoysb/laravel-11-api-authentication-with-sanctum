@@ -9,7 +9,16 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class PersonalAccessTokenService
 {
-    public function store(Request $request, User $user, $abilities)
+    /**
+     * Store a newly created personal access token for the given user.
+     *
+     * @param \Illuminate\Http\Request $request The current request instance.
+     * @param \App\Models\User $user The user for whom the token is being created.
+     * @param array $abilities The abilities/permissions to be assigned to the token.
+     *
+     * @return string The plain text token.
+     */
+    public function store(Request $request, User $user, $abilities): string
     {
         $tokenResult = $user->createToken('auth_token', $abilities);
         $token = $tokenResult->plainTextToken;
@@ -21,7 +30,18 @@ class PersonalAccessTokenService
         return $token;
     }
 
-    public function delete(Request $request, $tokenId = null)
+    /**
+     * Delete a personal access token.
+     *
+     * If no token ID is provided, the current session's access token will be deleted.
+     * If a token ID is provided, the token will be found and deleted if it belongs to the authenticated user.
+     *
+     * @param \Illuminate\Http\Request $request The current HTTP request instance.
+     * @param int|null $tokenId The ID of the token to delete, or null to delete the current token.
+     *
+     * @return bool|null True if the token was successfully deleted, false if the token was not found or does not belong to the user, null if the current session's token was deleted.
+     */
+    public function delete(Request $request, int $tokenId = null): bool
     {
         if (!$tokenId) {
             // Logout current session
@@ -33,7 +53,7 @@ class PersonalAccessTokenService
         if ($token && $token->tokenable_id === $request->user()->id) {
             return $token->delete();
         }
-        
+
         return false;
     }
 }
