@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Services\PersonalAccessTokenService;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
+    public function __construct(private PersonalAccessTokenService $personalAccessTokenService) {}
+
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -24,12 +28,13 @@ class AuthController extends Controller
         $validatedData = $validator->validated();
 
         try {
+            DB::beginTransaction();
             $user = User::create($validatedData);
 
             // Create a new personal access token and assign some abilities to it.
-            $tokenResult = $user->createToken('auth_token', ['create', 'read', 'update', 'delete']);
-            $token = $tokenResult->plainTextToken;
-
+            $token = $this->personalAccessTokenService->store($request, $user, ['create', 'read', 'update', 'delete']);
+            DB::commit();
+            
             return self::withCreated(
                 'User ' . self::MESSAGES['register'],
                 [
@@ -39,7 +44,8 @@ class AuthController extends Controller
                 ]
             );
         } catch (Exception $e) {
-            return self::withBadRequest(self::MESSAGES['system_error'], get_class($e));
+            DB::rollBack();
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
         }
     }
 }
