@@ -122,6 +122,9 @@ class AuthController extends Controller
     /**
      * Logout the authenticated user by deleting their personal access token.
      *
+     * If tokenId is null, deletes the current session.
+     * If tokenId is provided, deletes the specified session.
+     *
      * @param \Illuminate\Http\Request $request The current request instance.
      *
      * @param int|null $tokenId The ID of the token to delete, or null to delete the current token.
