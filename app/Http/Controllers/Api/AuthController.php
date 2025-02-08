@@ -120,6 +120,23 @@ class AuthController extends Controller
     }
 
     /**
+     * Get the login sessions for the authenticated user.
+     *
+     * This method retrieves all active personal access tokens for the authenticated user.
+     * It returns the token details including the creation time, expire time and last used time.
+     *
+     * @param \Illuminate\Http\Request $request The current request instance.
+     *
+     * @return \Illuminate\Http\JsonResponse The response containing the list of active login sessions.
+     */
+    public function loginSessions(Request $request): JsonResponse
+    {
+        $tokens = $this->personalAccessTokenService->index($request);
+
+        return self::withOk('Active login sessions retrieved successfully.', $tokens);
+    }
+
+    /**
      * Logout the authenticated user by deleting their personal access token.
      *
      * If tokenId is null, deletes the current session.
