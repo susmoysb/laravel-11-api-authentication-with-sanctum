@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Classes\ApiResponse;
 use App\Models\User;
+use App\Traits\ConstantsTrait;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class PersonalAccessTokenService
 {
+    use ConstantsTrait;
+
     /**
      * Retrieve all personal access tokens for the authenticated user.
      *
@@ -69,6 +72,6 @@ class PersonalAccessTokenService
             return $token->delete();
         }
 
-        throw new HttpResponseException(ApiResponse::withNotFound('Token not found or does not belong to the authenticated user.'));
+        throw new HttpResponseException(ApiResponse::withNotFound(self::MESSAGES['token_not_found']));
     }
 }

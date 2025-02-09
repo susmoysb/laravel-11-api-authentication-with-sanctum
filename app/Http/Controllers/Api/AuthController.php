@@ -105,6 +105,7 @@ class AuthController extends Controller
 
         if ($user && Hash::check($password, $user->password)) {
             // Create a new personal access token and assign some abilities to it.
+            // Assign abilities according to the requirements. This assignment of abilities can also be dynamic based on user.
             $token = $this->personalAccessTokenService->store($request, $user, ['create', 'read', 'update', 'delete']);
             return self::withOk(
                 'User ' . self::MESSAGES['login'],
@@ -133,7 +134,7 @@ class AuthController extends Controller
     {
         $tokens = $this->personalAccessTokenService->index($request);
 
-        return self::withOk('Active login sessions retrieved successfully.', $tokens);
+        return self::withOk('Active login sessions ' . self::MESSAGES['retrieve'], $tokens);
     }
 
     /**

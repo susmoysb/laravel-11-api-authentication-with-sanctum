@@ -11,5 +11,9 @@ trait ConstantsTrait
         'logout' => 'logged out successfully.',
         'invalid_credentials' => 'Invalid credentials.',
         'system_error' => 'Something went wrong. Please try again later.',
+        'not_found' => 'not found.',
+        'token_not_found' => 'Token not found or does not belong to the authenticated user.',
+        'retrieve' => 'retrieved successfully.',
+        'no_permission' => 'You do not have any permission to perform this action.',
     ];
 }
