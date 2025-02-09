@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -46,20 +49,53 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created user in storage.
+     *
+     * This method handles the creation of a new user and stores it in the database.
+     * It validates the incoming request data and returns a JSON response.
+     *
+     * @param  \Illuminate\Http\Request  $request  The incoming request containing user data.
+     *
+     * @return \Illuminate\Http\JsonResponse  A JSON response indicating the result of the operation.
+     *
+     * @throws \Illuminate\Validation\ValidationException  If the request data fails validation.
+     * @throws \Exception  If an error occurs during the user creation process.
      */
     public function store(Request $request)
     {
-        //
+        self::tokenCheck($request, 'create');
+
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'min:2', 'max:255'],
+            'username' => ['required', 'string', 'min:2', 'max:30', Rule::unique('users')],
+            'employee_id' => ['required', 'string', 'min:2', 'max:30', Rule::unique('users')],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $validatedData = $validator->validated();
+
+        try {
+            $user = User::create($validatedData);
+            return self::withCreated('User ' . self::MESSAGES['store'], $user);
+        } catch (Exception $e) {
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified user.
+     *
+     * @param \Illuminate\Http\Request $request The incoming request instance.
+     * @param string $id The ID of the user to retrieve.
+     *
+     * @return \Illuminate\Http\JsonResponse The response containing the user data or an error message.
      */
-    public function show(Request $request, string $id)
+    public function show(Request $request, string $id): JsonResponse
     {
         self::tokenCheck($request, 'read');
 
+        // Use Query Builder
         $user = DB::table('users')->where('id', $id)->first();
         return $user
             ? self::withOk('User ' . self::MESSAGES['retrieve'], $user)
@@ -71,7 +107,28 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        self::tokenCheck($request, 'update');
+
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'min:2', 'max:255'],
+            'username' => ['required', 'string', 'min:2', 'max:30', Rule::unique('users')->ignore($id)],
+            'employee_id' => ['required', 'string', 'min:2', 'max:30', Rule::unique('users')->ignore($id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
+        ]);
+
+        $validatedData = $validator->validated();
+
+        // Use Eloquent Model Relationship
+        $user = User::find($id);
+        if ($user) {
+            try {
+                $user->update($validatedData);
+                return self::withOk('User ' . self::MESSAGES['update'], $user);
+            } catch (Exception $e) {
+                return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+            }
+        }
+        return self::withNotFound('User ' . self::MESSAGES['not_found']);
     }
 
     /**

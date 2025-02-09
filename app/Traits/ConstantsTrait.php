@@ -5,8 +5,10 @@ namespace App\Traits;
 trait ConstantsTrait
 {
     public const MESSAGES = [
-        'validation_error' => 'Validation Error',
+        'validation_error' => 'Validation Error.',
         'register' => 'registered successfully.',
+        'store' => 'stored successfully.',
+        'update' => 'updated successfully.',
         'login' => 'logged in successfully.',
         'logout' => 'logged out successfully.',
         'invalid_credentials' => 'Invalid credentials.',
