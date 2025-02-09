@@ -14,6 +14,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/logout/{tokenId?}', 'logout')->where('tokenId', '[0-9]+');
         Route::get('/login-sessions', 'loginSessions');
 
+        Route::get('users/me', [UserController::class, 'me']);
+        Route::patch('users/change-password', [UserController::class, 'changePassword']);
         Route::apiResource('users', UserController::class);
     });
 });
