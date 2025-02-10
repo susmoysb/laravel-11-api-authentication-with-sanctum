@@ -45,8 +45,11 @@ class UserController extends Controller
     {
         self::tokenCheck($request, 'read');
 
-        $users = User::all();
-        return self::withOk('Users' . self::MESSAGES['retrieve'], $users);
+        $users = User::query();
+        if ($request->has('with_trashed')) {
+            $users->withTrashed();
+        }
+        return self::withOk('Users ' . self::MESSAGES['retrieve'], $users->get());
     }
 
     /**
@@ -191,10 +194,35 @@ class UserController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Destroy the specified user.
+     *
+     * This method handles the deletion of a user by their ID. It first checks the
+     * validity of the request token for the 'delete' action. If the user is found,
+     * it attempts to perform a soft delete on the user. If the deletion is successful,
+     * it returns a JSON response indicating success. If an exception occurs during
+     * deletion, it returns a JSON response with a bad request status and the exception
+     * message. If the user is not found, it returns a JSON response indicating that
+     * the user was not found.
+     *
+     * @param Request $request The HTTP request instance.
+     * @param string $id The ID of the user to be deleted.
+     *
+     * @return JsonResponse The JSON response indicating the result of the deletion.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        //
+        self::tokenCheck($request, 'delete');
+
+        $user = User::find($id);
+        if ($user) {
+            try {
+                // soft delete
+                $user->delete();
+                return self::withOk('User ' . self::MESSAGES['delete']);
+            } catch (Exception $e) {
+                return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+            }
+        }
+        return self::withNotFound('User ' . self::MESSAGES['not_found']);
     }
 }

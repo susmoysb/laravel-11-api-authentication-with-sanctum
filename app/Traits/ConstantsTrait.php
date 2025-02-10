@@ -9,6 +9,7 @@ trait ConstantsTrait
         'register' => 'registered successfully.',
         'store' => 'stored successfully.',
         'update' => 'updated successfully.',
+        'delete' => 'deleted successfully.',
         'login' => 'logged in successfully.',
         'logout' => 'logged out successfully.',
         'invalid_credentials' => 'Invalid credentials.',
