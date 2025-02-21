@@ -11,11 +11,13 @@ Route::controller(AuthController::class)->group(function () {
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::controller(AuthController::class)->group(function () {
-        Route::post('/logout/{tokenId?}', 'logout')->where('tokenId', '[0-9]+');
         Route::get('/login-sessions', 'loginSessions');
-
-        Route::get('users/me', [UserController::class, 'me']);
-        Route::patch('users/change-password', [UserController::class, 'changePassword']);
-        Route::apiResource('users', UserController::class);
+        Route::post('/logout/{tokenId?}', 'logout')->where('tokenId', '[0-9]+');
     });
+
+    Route::controller(UserController::class)->prefix('users')->group(function () {
+        Route::get('/me', 'me');
+        Route::patch('/change-password', 'changePassword');
+    });
+    Route::apiResource('users', UserController::class);
 });
